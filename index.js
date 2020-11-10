@@ -40,9 +40,14 @@ const AskMenuIntentHandler = {
         console.log("mealType", mealType);
 
         const today = new Date();
-        var dayDiff = dayValue - today.getDay();
+        var dayDiff;
 
-        if (dayValue < today.getDay()) dayDiff += daysInWeek; 
+        if (dayValue >= 100) {
+            dayDiff = dayValue - 100; 
+        } else{    
+            dayDiff = dayValue - today.getDay();
+            if (dayValue < today.getDay()) dayDiff += daysInWeek; 
+        }
 
         var queryDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         queryDate.setDate(today.getDate() + parseInt(dayDiff));
