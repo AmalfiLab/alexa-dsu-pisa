@@ -1,0 +1,19 @@
+{
+  "name": "alexa-db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ask-sdk": "^2.10.0",
+    "ask-sdk-core": "^2.10.1",
+    "aws-sdk": "^2.786.0",
+    "dotenv": "^8.2.0",
+    "translate": "^1.1.2"
+  }
+}
