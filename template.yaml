@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Alexa Rigatoni Dorati Skill app description
+Resources:
+  pollingMenu:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: crawler.handler
+      Runtime: nodejs12.x
+      CodeUri: 'function/.'
+      Description: 'Polling the menu from the DSU web site'
+      MemorySize: 128
+      Timeout: 15
+      Policies:
+        - AWSLambdaBasicExecutionRole 
+      Events:
+        EveryWeekSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 9 ? * MON *)
