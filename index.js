@@ -26,16 +26,19 @@ const AskMenuIntentHandler = {
         && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AskMenuIntent';
     },
     async handle(handlerInput) {
+
         const daysInWeek = 7;
         const specialDaysStart = 100;
         const napTime = 14;
-        var mensa = Alexa.getSlotValue(handlerInput.requestEnvelope, 'canteen');
+        const today = new Date();
 
+        var mensa = Alexa.getSlotValue(handlerInput.requestEnvelope, 'canteen');
         var daySlot = Alexa.getSlot(handlerInput.requestEnvelope, 'day');
         var mealSlot = Alexa.getSlot(handlerInput.requestEnvelope, 'meal');
+
         var mealType;
-        const today = new Date();
         var dayDiff;
+        var speakOutput;
 
         if (mealSlot.resolutions === undefined) {
             let hoursToday = today.getHours();  
@@ -45,6 +48,7 @@ const AskMenuIntentHandler = {
                 mealType = "dinner";
             else
                 mealType = "launch";  
+
         } else {
             var mealRes = mealSlot.resolutions.resolutionsPerAuthority;
             var mealType = mealRes[0].values[0].value.id;
@@ -52,7 +56,7 @@ const AskMenuIntentHandler = {
         }
 
         if (daySlot.resolutions === undefined) {
-             dayDiff = 0;
+            dayDiff = 0;
         } else {
             var dayRes = daySlot.resolutions.resolutionsPerAuthority;
             var dayValue = dayRes[0].values[0].value.id;
@@ -74,10 +78,8 @@ const AskMenuIntentHandler = {
 
         var data = await readDb(mensa);
 
-        var speakOutput;
-
         if (data.Item.menu[queryDate.toISOString()] === undefined) {
-            speakOutput = "Mangi a casa.";
+            speakOutput = "Mi dispiace, il menù per la prossima settimana non è disponibile.";
         } else {
             console.log(data.Item.menu[queryDate.toISOString()][mealType]);
             speakOutput = data.Item.menu[queryDate.toISOString()][mealType];
@@ -97,7 +99,7 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
     },
     handle(handlerInput) {
-        const speakOutput = 'Bona!';
+        const speakOutput = 'Ciao!';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
