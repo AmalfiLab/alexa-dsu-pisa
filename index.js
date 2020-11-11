@@ -38,8 +38,8 @@ const AskMenuIntentHandler = {
         var dayDiff;
 
         if (mealSlot.resolutions === undefined) {
-            let hoursToday = today.getHours();  // 12
-            console.log(hoursToday);    // 12
+            let hoursToday = today.getHours();  
+            console.log(hoursToday);    
 
             if (hoursToday >= napTime)  
                 mealType = "dinner";

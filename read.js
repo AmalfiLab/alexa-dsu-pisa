@@ -18,7 +18,7 @@ function fetchOneByKey(mensa) {
         TableName: "menu",
         Key: {
             "idMensa": mensa
-        },
+        }
     };
     return new Promise((resolve, reject) => {
         docClient.get(params, function (err, data) {
