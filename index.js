@@ -27,30 +27,49 @@ const AskMenuIntentHandler = {
     },
     async handle(handlerInput) {
         const daysInWeek = 7;
+        const specialDaysStart = 100;
+        const napTime = 14;
         var mensa = Alexa.getSlotValue(handlerInput.requestEnvelope, 'canteen');
 
         var daySlot = Alexa.getSlot(handlerInput.requestEnvelope, 'day');
-        var dayRes = daySlot.resolutions.resolutionsPerAuthority;
-        var dayValue = dayRes[0].values[0].value.id;
-        console.log("dayValue", dayValue);
-      
         var mealSlot = Alexa.getSlot(handlerInput.requestEnvelope, 'meal');
-        var mealRes = mealSlot.resolutions.resolutionsPerAuthority;
-        var mealType = mealRes[0].values[0].value.id;
-        console.log("mealType", mealType);
-
+        var mealType;
         const today = new Date();
         var dayDiff;
 
-        if (dayValue >= 100) {
-            dayDiff = dayValue - 100; 
-        } else{    
-            dayDiff = dayValue - today.getDay();
-            if (dayValue < today.getDay()) dayDiff += daysInWeek; 
+        if (mealSlot.resolutions === undefined) {
+            let hoursToday = today.getHours();  // 12
+            console.log(hoursToday);    // 12
+
+            if (hoursToday >= napTime)  
+                mealType = "dinner";
+            else
+                mealType = "launch";  
+        } else {
+            var mealRes = mealSlot.resolutions.resolutionsPerAuthority;
+            var mealType = mealRes[0].values[0].value.id;
+            console.log("mealType", mealType);
         }
+
+        if (daySlot.resolutions === undefined) {
+             dayDiff = 0;
+        } else {
+            var dayRes = daySlot.resolutions.resolutionsPerAuthority;
+            var dayValue = dayRes[0].values[0].value.id;
+            console.log("dayValue", dayValue);
+            
+            if (dayValue >= specialDaysStart) {
+                dayDiff = dayValue - specialDaysStart; 
+            } else{    
+                dayDiff = dayValue - today.getDay();
+                if (dayValue < today.getDay()) dayDiff += daysInWeek; 
+            }
+        }
+    
 
         var queryDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         queryDate.setDate(today.getDate() + parseInt(dayDiff));
+        queryDate.setMinutes(queryDate.getMinutes() - queryDate.getTimezoneOffset());
         console.log(queryDate);
 
         var data = await readDb(mensa);
@@ -78,7 +97,7 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
     },
     handle(handlerInput) {
-        const speakOutput = 'Arrivederci!';
+        const speakOutput = 'Bona!';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
