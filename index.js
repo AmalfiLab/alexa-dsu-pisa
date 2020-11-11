@@ -32,9 +32,11 @@ const AskMenuIntentHandler = {
         const napTime = 14;
         const today = new Date();
 
-        var mensa = Alexa.getSlotValue(handlerInput.requestEnvelope, 'canteen');
+        var canteenSlot = Alexa.getSlot(handlerInput.requestEnvelope, 'canteen');
         var daySlot = Alexa.getSlot(handlerInput.requestEnvelope, 'day');
         var mealSlot = Alexa.getSlot(handlerInput.requestEnvelope, 'meal');
+        var canteenRes = canteenSlot.resolutions.resolutionsPerAuthority;
+        var canteenValue = canteenRes[0].values[0].value.name;
 
         var mealType;
         var dayDiff;
@@ -76,7 +78,7 @@ const AskMenuIntentHandler = {
         queryDate.setMinutes(queryDate.getMinutes() - queryDate.getTimezoneOffset());
         console.log(queryDate);
 
-        var data = await readDb(mensa);
+        var data = await readDb(canteenValue);
 
         if (data.Item.menu[queryDate.toISOString()] === undefined) {
             speakOutput = "Mi dispiace, il menù per la prossima settimana non è disponibile.";
