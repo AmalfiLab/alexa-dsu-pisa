@@ -2,12 +2,26 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 Description: Alexa Rigatoni Dorati Skill app description
 Resources:
+  alexarigatonidorati:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs12.x
+      CodeUri: .
+      Description: ''
+      MemorySize: 128
+      Timeout: 3
+      Policies:
+        - AWSLambdaBasicExecutionRole 
+      Events:
+        AlexaSkillEvent:
+          Type: AlexaSkill
   pollingMenu:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: crawler.handler
       Runtime: nodejs12.x
-      CodeUri: 'function/.'
+      CodeUri: .
       Description: 'Polling the menu from the DSU web site'
       MemorySize: 128
       Timeout: 15
