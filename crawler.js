@@ -1,6 +1,7 @@
 const axios = require('axios').default;
 const { MenuParser, options } = require('@amalfilab/dsu-menu-parser');
 const AWS = require('aws-sdk');
+const { exit } = require('process');
 require('dotenv').config();
 
 AWS.config.update({
@@ -77,13 +78,7 @@ function getStartEndDates() {
   return { startDate, endDate };
 }
 
-async function main() {
-  const { startDate, endDate } = getStartEndDates();
-  const { martiri: martiriUrl } = getMenuLinks(startDate, endDate);
-  console.log("martiri url", martiriUrl);
-  const buffer = await downloadPdf(martiriUrl);
-  const parser = new MenuParser(buffer, options.martiri)
-
+async function getMenu(parser, startDate) {
   let dates = [ startDate ];
   const daysInWeek = 7;
   for (let i = 1; i < daysInWeek; ++i) {
@@ -100,8 +95,44 @@ async function main() {
     menu[date.toISOString()] = { launch, dinner };
   }
 
-  console.log(menu);
-  // await updateDatabase(menu);
+  return menu;
+}
+
+async function fetchAndParseMenu(url, parserOpts, startDate) {
+  const buffer = await downloadPdf(url).catch(err => {
+    throw `Error while downloading pdf from ${url}. ${err.message}`;
+  });
+  const parser = new MenuParser(buffer, parserOpts)
+  const menu = await getMenu(parser, startDate);
+  return menu;
+}
+
+async function main() { 
+  let menu = {};
+
+  try {
+    const { startDate, endDate } = getStartEndDates();
+    const { martiri: martiriUrl } = getMenuLinks(startDate, endDate);
+    const m = await fetchAndParseMenu(martiriUrl, options.martiri, startDate);
+    console.log(m);
+    menu = { ...m };
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
+    let { startDate, endDate } = getStartEndDates();
+    startDate.setDate(startDate.getDate() + 7);
+    endDate.setDate(endDate.getDate() + 7);
+    const { martiri: martiriUrl } = getMenuLinks(startDate, endDate);
+    const m = await fetchAndParseMenu(martiriUrl, options.martiri, startDate);
+    console.log(m);
+    menu = { ...menu, ...m};
+  } catch (error) {
+    console.error(error)
+  }
+
+  await updateDatabase(menu);
 }
 
 exports.handler = async () => {
