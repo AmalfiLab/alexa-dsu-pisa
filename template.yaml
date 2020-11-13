@@ -31,4 +31,4 @@ Resources:
         EveryWeekSchedule:
           Type: Schedule
           Properties:
-            Schedule: cron(0 9 ? * MON *)
+            Schedule: cron(0 9 ? * MON,SAT *)
