@@ -65,14 +65,14 @@ async function updateDatabase(menu) {
   });
 }
 
-function getStartEndDates() {
+function getStartEndDates(deltaWeek) {
   const now = new Date();
   const nowDay = now.getUTCDay();
 
   let startDate = new Date(
-    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 1);
+    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 1 + deltaWeek*7);
   let endDate = new Date(
-    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 7);
+    now.getFullYear(), now.getMonth(), now.getDate() - nowDay + 7 + deltaWeek*7);
   startDate.setMinutes(startDate.getMinutes() - startDate.getTimezoneOffset());
   endDate.setMinutes(endDate.getMinutes() - endDate.getTimezoneOffset());
   return { startDate, endDate };
@@ -107,37 +107,20 @@ async function fetchAndParseMenu(url, parserOpts, startDate) {
   return menu;
 }
 
-async function main() { 
-  let menu = {};
+async function main(event) {
+  const { canteen, deltaWeek } = event; 
 
-  try {
-    const { startDate, endDate } = getStartEndDates();
-    const { martiri: martiriUrl } = getMenuLinks(startDate, endDate);
-    const m = await fetchAndParseMenu(martiriUrl, options.martiri, startDate);
-    console.log(m);
-    menu = { ...m };
-  } catch (error) {
-    console.error(error);
-  }
-
-  try {
-    let { startDate, endDate } = getStartEndDates();
-    startDate.setDate(startDate.getDate() + 7);
-    endDate.setDate(endDate.getDate() + 7);
-    const { martiri: martiriUrl } = getMenuLinks(startDate, endDate);
-    const m = await fetchAndParseMenu(martiriUrl, options.martiri, startDate);
-    console.log(m);
-    menu = { ...menu, ...m};
-  } catch (error) {
-    console.error(error)
-  }
-
+  const { startDate, endDate } = getStartEndDates(deltaWeek);
+  const url = getMenuLinks(startDate, endDate)[canteen];
+  const menu = await fetchAndParseMenu(url, options[canteen], startDate);
+  console.log(menu);
   await updateDatabase(menu);
 }
 
-exports.handler = async () => {
+exports.handler = async (event) => {
+  console.log("event", event);
   try {
-    await main();
+    await main(event);
     return { "statusCode": 200 };
   } catch (error) {
     console.error(error);
