@@ -11,7 +11,9 @@ AWS.config.update({
 });
 
 const urlTemplates = {
-  martiri: "https://www.dsu.toscana.it/it/Menù-dal-${START}-al-${END}-martiri.pdf"
+  martiri: "https://www.dsu.toscana.it/it/Menù-dal-${START}-al-${END}-martiri.pdf",
+  rosellini: "https://www.dsu.toscana.it/it/Menù-dal-${START}-al-${END}-rosellini.pdf",
+  betti: "https://www.dsu.toscana.it/it/Menù-dal-${START}-al-${END}-betti.pdf"
 };
 
 function applyUrlTemplate(template, startDate, endDate) {
@@ -33,9 +35,11 @@ function applyUrlTemplate(template, startDate, endDate) {
 }
 
 function getMenuLinks(startDate, endDate) {  
-  return {
-    martiri: applyUrlTemplate(urlTemplates.martiri, startDate, endDate)
-  };
+  let links = {};
+  for (key in urlTemplates) {
+    links[key] = applyUrlTemplate(urlTemplates[key], startDate, endDate);
+  }
+  return links;
 }
 
 async function downloadPdf(url) {
@@ -43,16 +47,28 @@ async function downloadPdf(url) {
   return res.data;
 }
 
-async function updateDatabase(menu) {
+async function updateDatabase(menu, idMensa) {
   let docClient = new AWS.DynamoDB.DocumentClient();
+  let updateExpr = "set ";
+  let exprAttrValue = {};
+  let exprAttrName = {}
+  let i = 0;
+  for (const elem of menu) {
+    updateExpr += `menu.#d${i} = :m${i}, `
+    exprAttrValue[`:m${i}`] = { launch: elem.launch, dinner: elem.dinner };
+    exprAttrName[`#d${i}`] = elem.date;
+    i++;
+  }
+
   const params = {
     TableName: 'menu',
     Key: {
-      idMensa: 'martiri'
+      idMensa
     },
-    UpdateExpression: "set menu = :m, updatedAt = :d",
+    UpdateExpression: updateExpr + "updatedAt = :d",
+    ExpressionAttributeNames: exprAttrName,
     ExpressionAttributeValues: {
-      ":m": menu,
+      ...exprAttrValue,
       ":d": (new Date()).toISOString()
     }
   };
@@ -78,7 +94,7 @@ function getStartEndDates(deltaWeek) {
   return { startDate, endDate };
 }
 
-async function getMenu(parser, startDate) {
+async function getMenu(parser, parserOpts, startDate) {
   let dates = [ startDate ];
   const daysInWeek = 7;
   for (let i = 1; i < daysInWeek; ++i) {
@@ -87,12 +103,24 @@ async function getMenu(parser, startDate) {
     dates.push(d);
   }
 
-  let menu = {};
+  let menu = [];
   for (const date of dates) {
-    const day = (date.getDay() > 1) ? date.getDay() - 1 : 6;
-    const launch = (await parser.getMenu(day, 'launch')).join('; ');
-    const dinner = (await parser.getMenu(day, 'dinner')).join('; ');
-    menu[date.toISOString()] = { launch, dinner };
+    let elem = { date: date.toISOString() };
+  
+    if (parserOpts.openDays.includes(parseInt(date.getDay()))) {
+      const day = (date.getDay() >= 1) ? date.getDay() - 1 : 6;
+      const launch = (await parser.getMenu(day, 'launch')).join('; ');
+      let dinner = "";
+      if (parserOpts.dinner)
+        dinner = (await parser.getMenu(day, 'dinner')).join('; ');
+      else
+        dinner = "Mensa chiusa";
+      elem = { ...elem, launch, dinner };
+    } else {
+      elem = { ...elem, launch: "Mensa chiusa", dinner: "Mensa chiusa" };
+    }
+
+    menu.push(elem);
   }
 
   return menu;
@@ -103,7 +131,7 @@ async function fetchAndParseMenu(url, parserOpts, startDate) {
     throw `Error while downloading pdf from ${url}. ${err.message}`;
   });
   const parser = new MenuParser(buffer, parserOpts)
-  const menu = await getMenu(parser, startDate);
+  const menu = await getMenu(parser, parserOpts, startDate);
   return menu;
 }
 
@@ -114,7 +142,7 @@ async function main(event) {
   const url = getMenuLinks(startDate, endDate)[canteen];
   const menu = await fetchAndParseMenu(url, options[canteen], startDate);
   console.log(menu);
-  await updateDatabase(menu);
+  await updateDatabase(menu, canteen);
 }
 
 exports.handler = async (event) => {

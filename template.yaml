@@ -27,8 +27,31 @@ Resources:
       Timeout: 15
       Policies:
         - AWSLambdaBasicExecutionRole 
-      Events:
-        EveryWeekSchedule:
-          Type: Schedule
-          Properties:
-            Schedule: cron(0 9 ? * MON,SAT *)
+  pollingMenusCurrentWeek:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      ScheduleExpression: cron(0 9 ? * MON *)
+      Targets:
+        - Id: pollingMenuMartiriCurrentWeek
+          Arn: !GetAtt pollingMenu.Arn
+          Input: '{"canteen": "martiri", "deltaWeek": 0}'
+        - Id: pollingMenuRoselliniCurrentWeek
+          Arn: !GetAtt pollingMenu.Arn
+          Input: '{"canteen": "rosellini", "deltaWeek": 0}'
+        - Id: pollingMenuBettiCurrentWeek
+          Arn: !GetAtt pollingMenu.Arn
+          Input: '{"canteen": "betti", "deltaWeek": 0}'
+  pollingMenusNextWeek:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      ScheduleExpression: cron(0 9 ? * SAT *)
+      Targets:
+        - Id: pollingMenuMartiriNextWeek
+          Arn: !GetAtt pollingMenu.Arn
+          Input: '{"canteen": "martiri", "deltaWeek": 1}'
+        - Id: pollingMenuRoselliniNextWeek
+          Arn: !GetAtt pollingMenu.Arn
+          Input: '{"canteen": "rosellini", "deltaWeek": 1}'
+        - Id: pollingMenuBettiNextWeek
+          Arn: !GetAtt pollingMenu.Arn
+          Input: '{"canteen": "betti", "deltaWeek": 1}'
