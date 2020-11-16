@@ -13,6 +13,7 @@ Resources:
       Timeout: 3
       Policies:
         - AWSLambdaBasicExecutionRole 
+        - AmazonDynamoDBReadOnlyAccess 
       Events:
         AlexaSkillEvent:
           Type: AlexaSkill
@@ -27,6 +28,7 @@ Resources:
       Timeout: 15
       Policies:
         - AWSLambdaBasicExecutionRole 
+        - AmazonDynamoDBFullAccess 
   pollingMenusCurrentWeek:
     Type: 'AWS::Events::Rule'
     Properties:

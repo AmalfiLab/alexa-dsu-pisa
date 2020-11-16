@@ -1,6 +1,6 @@
 var AWS = require("aws-sdk");
 const path = require("path");
-require('dotenv').config({path: path.resolve(process.cwd(), './lib.env')})
+require('dotenv').config();
 
 let awsConfig = {
     "region": process.env.REGION,
